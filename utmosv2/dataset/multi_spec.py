@@ -21,6 +21,34 @@ if TYPE_CHECKING:
     from utmosv2.dataset._schema import DatasetSchema
 
 
+def process_audio_only_versa(input_wav, cfg):
+    y = input_wav
+    specs = []
+    length = int(cfg.dataset.spec_frames.frame_sec * cfg.sr)
+    y = extend_audio(cfg, y, length, type=cfg.dataset.spec_frames.extend)
+    for _ in range(cfg.dataset.spec_frames.num_frames):
+        y1 = select_random_start(y, length)
+        for spec_cfg in cfg.dataset.specs:
+            spec = _make_spctrogram(cfg, spec_cfg, y1)
+            if cfg.dataset.spec_frames.mixup_inner:
+                y2 = select_random_start(y, length)
+                spec2 = _make_spctrogram(cfg, spec_cfg, y2)
+                lmd = np.random.beta(
+                    cfg.dataset.spec_frames.mixup_alpha,
+                    cfg.dataset.spec_frames.mixup_alpha,
+                )
+                spec = lmd * spec + (1 - lmd) * spec2
+            spec = np.stack([spec, spec, spec], axis=0)
+            # spec = np.transpose(spec, (1, 2, 0))
+            spec = torch.tensor(spec, dtype=torch.float32)
+            phase = "valid"
+            spec = cfg.transform[phase](spec)
+            specs.append(spec)
+    spec = torch.stack(specs).float()
+
+    return spec
+
+
 class MultiSpecDataset(BaseDataset):
     """
     Dataset class for mel-spectrogram feature extractor. This class is responsible for
