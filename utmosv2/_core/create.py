@@ -69,7 +69,7 @@ def create_model(
         if not checkpoint_path.exists():
             raise FileNotFoundError(f"Checkpoint not found: {checkpoint_path}")
 
-        model.load_state_dict(torch.load(checkpoint_path))
+        model.load_state_dict(torch.load(checkpoint_path, map_location="cpu"))
         print(f"Loaded checkpoint from {checkpoint_path}")
 
     return model
