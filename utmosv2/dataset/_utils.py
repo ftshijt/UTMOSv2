@@ -27,7 +27,9 @@ def extend_audio(cfg, y: np.ndarray, length: int, type: str) -> np.ndarray:
 
 def select_random_start(y: np.ndarray, length: int) -> np.ndarray:
     start = np.random.randint(0, y.shape[0] - length)
-    return y[start : start + length]
+    # disable random select
+    # return y[start : start + length]
+    return y[:length]
 
 
 def get_dataset_map(cfg):
